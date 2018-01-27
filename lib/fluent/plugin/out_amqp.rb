@@ -46,6 +46,7 @@ module Fluent::Plugin
     config_param :tls_verify_peer, :bool, default: true
     config_param :content_type, :string, default: "application/octet"
     config_param :content_encoding, :string, default: nil
+    config_param :auth_mechanism, :string, default: nil
 
     config_section :header do
       config_set_default :@type, DEFAULT_BUFFER_TYPE
@@ -232,7 +233,8 @@ module Fluent::Plugin
         tls: @tls || nil,
         tls_cert: @tls_cert,
         tls_key: @tls_key,
-        verify_peer: @tls_verify_peer
+        verify_peer: @tls_verify_peer,
+        auth_mechanism: @auth_mechanism,
       }
       opts[:tls_ca_certificates] = @tls_ca_certificates if @tls_ca_certificates
       return opts

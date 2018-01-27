@@ -290,14 +290,13 @@ Note: The 'source' configuration accepts the same arguments.
   host amqp.example.com
   port 5671              # Note that your port may change for TLS auth
   vhost /
-  user guest
-  pass guest
 
   tls true
   tls_key "/etc/fluent/ssl/client.key.pem"
   tls_cert "/etc/fluent/ssl/client.crt.pem"
   tls_ca_certificates ["/etc/fluent/ssl/server.cacrt.pem", "/another/ca/cert.file"]
   tls_verify_peer true
+  auth_mechanism EXTERNAL
 
 </match>
 ```
