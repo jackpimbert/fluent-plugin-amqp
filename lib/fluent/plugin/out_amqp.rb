@@ -234,7 +234,7 @@ module Fluent::Plugin
         tls_cert: @tls_cert,
         tls_key: @tls_key,
         verify_peer: @tls_verify_peer,
-        auth_mechanism: @auth_mechanism,
+        auth_mechanism: @auth_mechanism
       }
       opts[:tls_ca_certificates] = @tls_ca_certificates if @tls_ca_certificates
       return opts
