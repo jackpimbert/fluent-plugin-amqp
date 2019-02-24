@@ -307,7 +307,7 @@ Note: The 'source' configuration accepts the same arguments.
 
 This plugin supports multiple workers for both source and matcher configurations.
 
-Note that when using exclusive queues with multiple workers the queues will be renamed based on the worker id. 
+Note that when using exclusive queues with multiple workers the queues will be renamed based on the worker id.
 
 For example, if your queue is configured as `fluent.queue`, with 4 workers and `exclusive: true` the plugin
 will create four named queues;
@@ -351,7 +351,7 @@ To use this;
     - `rabbitmqctl set_policy images-shard "^fluent.modhash$" '{"shards-per-node": 2, "routing-key": "1234"}'`
 4. Setup fluentd to use the associated type and bind to a queue named the same as the input exchange name
     - This queue is created 'dynamically' and will not show as a formal queue in the manager, but will deliver events to fluent normally
-    
+
 *Warning*: You will need to run at least N consumers for the N shards created as the plugin does not try to route all shards onto consumers dynamically.
 
 # Contributing to fluent-plugin-amqp <a name="contributing"></a>
@@ -363,6 +363,13 @@ To use this;
 - Commit and push until you are happy with your contribution
 - Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
 - Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+
+## Releasing
+
+1. Make sure you've got credentials with authorisation to deploy to https://rubygems.org/gems/fluent-plugin-amqp
+1. Update the `VERSION` file
+1. Run `bundle exec rake release`
+1. Run `git push upstream --tags`
 
 # Copyright <a name="copyright"></a>
 
