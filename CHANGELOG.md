@@ -3,6 +3,7 @@
 ## 0.13.0 - Feb 24, 2019
 
 * Feature: TLS Client Certificate and Key are no longer required if TLS is setup - #57
+* Added 'auth_mechanism' configuration. - #52
 
 ## 0.12.x
 
