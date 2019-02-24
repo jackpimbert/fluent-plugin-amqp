@@ -25,7 +25,7 @@ def get_plugin(configuration = CONFIG)
 
   # Start the driver and wait while it initialises the threads etc
   plugin.start
-  10.times { sleep 0.05 }
+  5.times { sleep 0.05 }
   return plugin
 end
 
@@ -89,9 +89,37 @@ end
       assert_equal "/", d.instance.vhost
     end
 
-    test 'invalid tls configuration' do
-      assert_raise_message(/'tls_key' and 'tls_cert' must be all specified if tls is enabled./) do
-        create_driver(CONFIG + %(tls true))
+    sub_test_case 'TLS Configurations' do
+      test 'basic TLS without certificates' do
+        configs = {'basic' => CONFIG}
+        configs.merge!('tls' => CONFIG + %q(tls true))
+
+        configs.each_pair { |k, v|
+          @d = Fluent::Test::Driver::Output.new(Fluent::Plugin::AMQPOutput).configure(v)
+          assert_equal "amqp.example.com", @d.instance.host
+          assert_equal 5672, @d.instance.port
+          assert_equal "guest", @d.instance.user
+          assert_equal "/", @d.instance.vhost
+          assert_equal "/", @d.instance.vhost
+        }
+      end
+
+      test 'basic TLS with certificates' do
+        configs = {'basic' => CONFIG}
+        configs.merge!('tls' => CONFIG + %q(
+          tls true
+          tls_key "/etc/fluent/ssl/client.key.pem"
+          tls_cert "/etc/fluent/ssl/client.crt.pem"
+          ))
+
+        configs.each_pair { |k, v|
+          @d = Fluent::Test::Driver::Output.new(Fluent::Plugin::AMQPOutput).configure(v)
+          assert_equal "amqp.example.com", @d.instance.host
+          assert_equal 5672, @d.instance.port
+          assert_equal "guest", @d.instance.user
+          assert_equal "/", @d.instance.vhost
+          assert_equal "/", @d.instance.vhost
+        }
       end
     end
 

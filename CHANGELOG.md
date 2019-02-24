@@ -1,3 +1,8 @@
+# 0.13.x
+
+## 0.13.0 - Feb 24, 2019
+
+* Feature: TLS Client Certificate and Key are no longer required if TLS is setup - #57
 
 ## 0.12.x
 
@@ -14,6 +19,7 @@
 * Added header options to set message headers based on the message content on
   the Matcher plugin - #35
 * Enabled support for Coveralls code-coverage reporting
+
 
 # 0.10.x
 

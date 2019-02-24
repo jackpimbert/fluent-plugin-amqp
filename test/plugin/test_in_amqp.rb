@@ -18,7 +18,8 @@ class AMPQInputTest < Test::Unit::TestCase
     pass guest
     queue logs
   ).freeze
-  
+
+
   TLS_CONFIG = CONFIG + %q(
     tls true
     tls_key "/etc/fluent/ssl/client.key.pem"
@@ -64,6 +65,20 @@ class AMPQInputTest < Test::Unit::TestCase
       assert_equal "/", @d.instance.vhost
     end
 
+    test 'basic TLS without certificates' do
+      configs = {'basic' => CONFIG}
+      configs.merge!('tls' => CONFIG + %q(tls true))
+
+      configs.each_pair { |k, v|
+        @d = Fluent::Test::Driver::Input.new(Fluent::Plugin::AMQPInput).configure(v)
+        assert_equal "amqp.example.com", @d.instance.host
+        assert_equal 5672, @d.instance.port
+        assert_equal "guest", @d.instance.user
+        assert_equal "/", @d.instance.vhost
+        assert_equal "/", @d.instance.vhost
+      }
+    end
+
 
     test 'non exclusive and multi worker shouldnt change queue name' do
       conf = CONFIG + %(
@@ -76,10 +91,10 @@ class AMPQInputTest < Test::Unit::TestCase
         @d = @d.configure(conf)
         omit("BunnyMock is not avaliable") unless Object.const_defined?("BunnyMock")
         @d.instance.connection = BunnyMock.new
-      
+
         # Start the driver and wait while it initialises the threads etc
         @d.instance.start
-        10.times { sleep 0.05 }    
+        10.times { sleep 0.05 }
       end
       assert_true @d.instance.connection.queue_exists?("logs")
     end
@@ -113,7 +128,7 @@ class AMPQInputTest < Test::Unit::TestCase
         @d.instance.connection = BunnyMock.new
         # Start the driver and wait while it initialises the threads etc
         @d.instance.start
-        10.times { sleep 0.05 }    
+        10.times { sleep 0.05 }
       end
       assert_true @d.instance.connection.queue_exists?('logs')
     end
@@ -131,15 +146,9 @@ class AMPQInputTest < Test::Unit::TestCase
         @d.instance.connection = BunnyMock.new
         # Start the driver and wait while it initialises the threads etc
         @d.instance.start
-        10.times { sleep 0.05 }    
+        10.times { sleep 0.05 }
       end
       assert_true @d.instance.connection.queue_exists?('logs.3')
-    end
-
-    test 'invalid tls configuration' do
-      assert_raise_message(/'tls_key' and 'tls_cert' must be all specified if tls is enabled./) do
-        @d.configure(CONFIG + %(tls true))
-      end
     end
 
     test 'invalid host / queue configuration' do

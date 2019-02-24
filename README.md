@@ -103,8 +103,8 @@ plugins, and can be used as required.
 |:ssl|:bool|false| Is SSL enabled for this connection to RabbitMQ|
 |:verify_ssl|:bool|false| Verify the SSL certificate presented by RabbitMQ |
 |:tls|:bool|false| Should TLS be used for authentication |
-|:tls_cert|:string|nil| *Required if `tls true`* Path (or content) of TLS Certificate |
-|:tls_key|:string|nil| *Required if `tls true`* Path (or content) of TLS Key |
+|:tls_cert|:string|nil| Path (or content) of TLS Certificate |
+|:tls_key|:string|nil| Path (or content) of TLS Key |
 |:tls_ca_certificates|:array|nil| Array of paths to CA certificates |
 |:tls_verify_peer|:bool|true| Verify the servers TLS certificate |
 |:tag_key|:bool|false| Should the routing key be used for the event tag |
