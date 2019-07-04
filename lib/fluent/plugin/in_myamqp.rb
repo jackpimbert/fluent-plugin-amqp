@@ -28,10 +28,10 @@ module Fluent::Plugin
     config_param :verify_ssl, :bool, default: false
     config_param :heartbeat, :integer, default: 60
     config_param :queue, :string, default: nil
-    config_param :durable, :bool, default: false
-    config_param :exclusive, :bool, default: false
-    config_param :auto_delete, :bool, default: false
-    config_param :passive, :bool, default: false
+    config_param :queue_durable, :bool, default: false
+    config_param :queue_exclusive, :bool, default: false
+    config_param :queue_auto_delete, :bool, default: false
+    config_param :queue_passive, :bool, default: false
     config_param :payload_format, :string, default: "json"
     config_param :tag_key, :bool, default: false
     config_param :tag_header, :string, default: nil
@@ -43,8 +43,13 @@ module Fluent::Plugin
     config_param :tls_verify_peer, :bool, default: true
     config_param :bind_exchange, :bool, default: false
     config_param :exchange, :string, default: ""
-    config_param :routing_key, :string, default: "#"                       # The routing key used to bind queue to exchange - # = matches all, * matches section (tag.*.info)
-    config_param :add_metadata, :bool, default: false                      # Add the routing key and exchange name to the message
+    config_param :exchange_type, :string, default: "direct"
+    config_param :exchange_durable, :bool, default: false
+    config_param :exchange_auto_delete, :bool, default: false
+    config_param :exchange_passive, :bool, default: false
+    config_param :routing_key, :string, default: "#"
+    # Add the routing key and exchange name to the message
+    config_param :add_metadata, :bool, default: false
 
     def configure(conf)
       conf['format'] ||= conf['payload_format'] # legacy
@@ -69,32 +74,38 @@ module Fluent::Plugin
       @connection = Bunny.new get_connection_options unless @connection
       @connection.start
       @channel = @connection.create_channel
+      ready = true
 
-      if @exclusive && fluentd_worker_id > 0
+      if @queue_exclusive && fluentd_worker_id > 0
         log.info 'Config requested exclusive queue with multiple workers'
         @queue += ".#{fluentd_worker_id}"
         log.info "Renamed queue name to include worker id: #{@queue}"
       end
 
-      q = @channel.queue(@queue, passive: @passive, durable: @durable,
-                       exclusive: @exclusive, auto_delete: @auto_delete)
+      q = @channel.queue(@queue, passive: @queue_passive, durable: @queue_durable,
+                       exclusive: @queue_exclusive, auto_delete: @queue_auto_delete)
 
       if @bind_exchange
-        exchange_found = false
-        for i in 0..2
-          begin
-            log.info "Binding #{@queue} to #{@exchange}, :routing_key => #{@routing_key} (Attempt #{i+1}/3)"
-            q.bind(exchange=@exchange, routing_key: @routing_key)
-            exchange_found = true
-            break
-          rescue Bunny::NotFound, Bunny::ChannelAlreadyClosed => e
-            log.warn "Exchange #{@exchange} could not be bound: #{e.inspect}"
-            sleep 1
-          end
+        ready = false
+        begin
+          @channel.exchange_declare(@exchange, @exchange_type, durable: @exchange_durable,
+                                    auto_delete: @exchange_auto_delete, passive: @exchange_passive)
+        rescue Timeout::Error
+          log.warn "Failed to declare #{@exchange}"
+        end
+
+        begin
+          log.info "Binding #{@queue} to #{@exchange}, :routing_key => #{@routing_key}"
+          q.bind(exchange=@exchange, routing_key: @routing_key)
+          ready = true
+        rescue Bunny::NotFound, Bunny::ChannelAlreadyClosed => e
+          log.warn "Could not bind #{@queue} to #{@exchange}: #{e.inspect}"
         end
       end
 
-      if exchange_found
+      # only subscribe to a queue if we successfully bind to an exchange,
+      # or choose not to bind to an exchange.
+      if ready
         q.subscribe do |delivery, meta, msg|
           log.debug "Recieved message on #{@exchange}"
           payload = parse_payload(msg, delivery)
