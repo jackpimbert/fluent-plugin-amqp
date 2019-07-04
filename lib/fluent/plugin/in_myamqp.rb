@@ -81,12 +81,16 @@ module Fluent::Plugin
 
       if @bind_exchange
         exchange_found = false
-        begin
-          log.info "Binding #{@queue} to #{@exchange}, :routing_key => #{@routing_key}"
-          q.bind(exchange=@exchange, routing_key: @routing_key)
-          exchange_found = true
-        rescue Bunny::NotFound, Bunny::ChannelAlreadyClosed => e
-          log.warn "Exchange #{@exchange} could not be bound: #{e.inspect}"
+        for i in 0..2
+          begin
+            log.info "Binding #{@queue} to #{@exchange}, :routing_key => #{@routing_key} (Attempt #{i+1}/3)"
+            q.bind(exchange=@exchange, routing_key: @routing_key)
+            exchange_found = true
+            break
+          rescue Bunny::NotFound, Bunny::ChannelAlreadyClosed => e
+            log.warn "Exchange #{@exchange} could not be bound: #{e.inspect}"
+            sleep 1
+          end
         end
       end
 
